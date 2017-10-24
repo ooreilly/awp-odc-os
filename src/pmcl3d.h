@@ -36,6 +36,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 typedef float *RESTRICT *RESTRICT *RESTRICT Grid3D;
 typedef float *RESTRICT Grid1D;
 typedef int   *RESTRICT PosInf;
+enum SRCTYPE {SRC_VELOCITY, SRC_STRESS};
 
 void command(int argc, char **argv,
              float *TMAX, float *DH, float *DT, float *ARBC, float *PHT,
@@ -49,7 +50,7 @@ void command(int argc, char **argv,
              int *NBGZ, int *NEDZ, int *NSKPZ,
              float *FL, float *FH, float *FP, int *IDYNA, int *SoCalQ,
              char  *INSRC,  char *INVEL, char *OUT, char *INSRC_I2,
-             char  *CHKFILE);
+             char  *CHKFILE, int *SRCTYPE);
 
 int read_src_ifault_2(int rank, int READ_STEP,
     char *INSRC, char *INSRC_I2,
@@ -128,5 +129,20 @@ PosInf Alloc1P(int nx);
 void Delloc3D(Grid3D U);
 void Delloc1D(Grid1D U);
 void Delloc1P(PosInf U);
+
+/*
+ * Check that the source type has been correctly specified.
+ * 
+ * Parameters
+ *
+ * srctype : The source type selected by the user (see enum SRCTYPE for
+ *           possible options and explanations)
+ *
+ * Returns
+ *
+ * pass : returns `1` if the source type has been correctly specified,
+ *        and `0` otherwise. 
+ */
+int check_sourcetype(const enum SRCTYPE srctype);
 
 #endif

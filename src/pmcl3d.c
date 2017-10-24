@@ -37,8 +37,9 @@ void dstrqc_H(float* xx,       float* yy,     float* zz,    float* xy,    float*
               float* qs,       float* dcrjx,  float* dcrjy, float* dcrjz, int nyt,   int nzt,
               cudaStream_t St, float* lam_mu, int NX,       int rankx,    int ranky, int s_i,
               int e_i,         int s_j,       int e_j);
-void addsrc_H(int i,      int READ_STEP, int dim,    int* psrc,  int npsrc,  cudaStream_t St,
+void addsrc_H(int i,      int READ_STEP, int dim,    int    mode, int* psrc,  int npsrc,  cudaStream_t St,
               float* axx, float* ayy,    float* azz, float* axz, float* ayz, float* axy,
+              float* u,   float *v,      float* w,
               float* xx,  float* yy,     float* zz,  float* xy,  float* yz,  float* xz);
 
 void calcRecordingPoints(int *rec_nbgx, int *rec_nedx,
@@ -70,6 +71,7 @@ int main(int argc,char **argv)
     int   NX, NY, NZ, PX, PY, IDYNA, SoCalQ;
     int   NBGX, NEDX, NSKPX, NBGY, NEDY, NSKPY, NBGZ, NEDZ, NSKPZ;
     int   nxt, nyt, nzt;
+    int   SRCTYPE;
     MPI_Offset displacement;
     float FL, FH, FP;
     char  INSRC[50], INVEL[50], OUT[50], INSRC_I2[50], CHKFILE[50];
@@ -189,7 +191,7 @@ int main(int argc,char **argv)
       &NVAR,&NVE,&MEDIASTART,&IFAULT,&READ_STEP,&READ_STEP_GPU,
       &NTISKP,&WRITE_STEP,&NX,&NY,&NZ,&PX,&PY,
       &NBGX,&NEDX,&NSKPX,&NBGY,&NEDY,&NSKPY,&NBGZ,&NEDZ,&NSKPZ,
-      &FL,&FH,&FP,&IDYNA,&SoCalQ,INSRC,INVEL,OUT,INSRC_I2,CHKFILE);
+      &FL,&FH,&FP,&IDYNA,&SoCalQ,INSRC,INVEL,OUT,INSRC_I2,CHKFILE,&SRCTYPE);
 
     sprintf(filenamebasex,"%s/SX",OUT);
     sprintf(filenamebasey,"%s/SY",OUT);
@@ -360,6 +362,13 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     {
        printf("source initialization failed\n");
        return -1;
+    }
+    err = check_sourcetype(SRCTYPE);
+    if(err) {
+        printf("Source type has not been correctly specified. \
+                Make sure that SRCTYPE = 0 (Moment tensor source) \
+                or SRCTYPE = 1 (Body force).\n");
+        return -1;
     }
     if(rank==0) printf("After inisource\n");
 
@@ -632,8 +641,9 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
          if(rank==srcproc && cur_step<NST)
          {
             ++source_step;
-            addsrc_H(source_step, READ_STEP_GPU, maxdim, d_tpsrc, npsrc, stream_i, d_taxx, d_tayy, d_tazz, d_taxz, d_tayz, d_taxy,
-                     d_xx,       d_yy,      d_zz,   d_xy,    d_yz,  d_xz);
+            addsrc_H(source_step, READ_STEP_GPU, maxdim, 0, 
+                     d_tpsrc, npsrc, stream_i, d_taxx, d_tayy, d_tazz, d_taxz, d_tayz, d_taxy,
+                     d_u1, d_v1, d_w1, d_xx,       d_yy,      d_zz,   d_xy,    d_yz,  d_xz);
          }
          cudaThreadSynchronize();
 
@@ -1014,4 +1024,18 @@ void calcRecordingPoints(int *rec_nbgx, int *rec_nedx,
   *displacement *= sizeof(float);
 
   return;
+}
+
+int check_sourcetype(const enum SRCTYPE srctype)
+{
+        int pass = 0;
+        switch (srctype) {
+        case SRC_STRESS:
+                pass = 1;
+                break;
+        case SRC_VELOCITY:
+                pass = 1;
+                break;
+        }
+        return pass;        
 }

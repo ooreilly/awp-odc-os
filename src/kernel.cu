@@ -12,6 +12,7 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <assert.h>
 #include <stdio.h>
 #include "kernel.h"
 #include "pmcl3d_cons.h"
@@ -138,9 +139,13 @@ void dstrqc_H(float* xx,       float* yy,     float* zz,    float* xy,    float*
 }
 
 extern "C"
-void addsrc_H(int i,      int READ_STEP, int dim,    int* psrc,  int npsrc,  cudaStream_t St,
-              float* axx, float* ayy,    float* azz, float* axz, float* ayz, float* axy,
-              float* xx,  float* yy,     float* zz,  float* xy,  float* yz,  float* xz)
+void addsrc_H(int i,      int READ_STEP, int dim,         const enum SRCTYPE srctype,
+              int* psrc,  int npsrc,     cudaStream_t St,
+              float* axx, float* ayy,    float* azz,      
+              float* axz, float* ayz,    float* axy,
+              float* u,   float* v,      float* w, 
+              float* xx,  float* yy,     float* zz,  
+              float* xy,  float* yz,     float* xz)
 {
     dim3 grid, block;
     if(npsrc < 256)
@@ -156,8 +161,8 @@ void addsrc_H(int i,      int READ_STEP, int dim,    int* psrc,  int npsrc,  cud
     cudaError_t cerr;
     cerr=cudaGetLastError();
     if(cerr!=cudaSuccess) printf("CUDA ERROR: addsrc before kernel: %s\n",cudaGetErrorString(cerr));
-    addsrc_cu<<<grid, block, 0, St>>>(i,  READ_STEP, dim, psrc, npsrc, axx, ayy, azz, axz, ayz, axy,
-                                      xx, yy,        zz,  xy,   yz,  xz);
+    addsrc_cu<<<grid, block, 0, St>>>(i,  READ_STEP, dim, srctype, psrc, npsrc, axx, ayy, azz, axz, ayz, axy,
+                                      u, v, w, xx, yy,        zz,  xy,   yz,  xz);
     cerr=cudaGetLastError();
     if(cerr!=cudaSuccess) printf("CUDA ERROR: addsrc after kernel: %s\n",cudaGetErrorString(cerr));
     return;
@@ -567,8 +572,10 @@ __global__ void dstrqc(float* xx, float* yy,    float* zz,    float* xy,    floa
 }
 
 
-__global__ void addsrc_cu(int i,      int READ_STEP, int dim,    int* psrc,  int npsrc,
+__global__ void addsrc_cu(int i,      int READ_STEP, int dim,    const enum SRCTYPE mode, 
+                          int* psrc,  int npsrc,
                           float* axx, float* ayy,    float* azz, float* axz, float* ayz, float* axy,
+                          float* u, float* v, float* w, 
                           float* xx,  float* yy,     float* zz,  float* xy,  float* yz,  float* xz)
 {
         register float vtst;
@@ -583,12 +590,21 @@ __global__ void addsrc_cu(int i,      int READ_STEP, int dim,    int* psrc,  int
         idz = psrc[j*dim+2] + align - 1;
         pos = idx*d_slice_1 + idy*d_yline_1 + idz;
 
-        xx[pos] = xx[pos] - vtst*axx[j*READ_STEP+i];
-        yy[pos] = yy[pos] - vtst*ayy[j*READ_STEP+i];
-        zz[pos] = zz[pos] - vtst*azz[j*READ_STEP+i];
-        xz[pos] = xz[pos] - vtst*axz[j*READ_STEP+i];
-        yz[pos] = yz[pos] - vtst*ayz[j*READ_STEP+i];
-        xy[pos] = xy[pos] - vtst*axy[j*READ_STEP+i];
+        switch (mode) {
+        case SRC_STRESS:
+                xx[pos] = xx[pos] - vtst*axx[j*READ_STEP+i];
+                yy[pos] = yy[pos] - vtst*ayy[j*READ_STEP+i];
+                zz[pos] = zz[pos] - vtst*azz[j*READ_STEP+i];
+                xz[pos] = xz[pos] - vtst*axz[j*READ_STEP+i];
+                yz[pos] = yz[pos] - vtst*ayz[j*READ_STEP+i];
+                xy[pos] = xy[pos] - vtst*axy[j*READ_STEP+i];
+                break;
+        case SRC_VEL:
+                u[pos] = u[pos] + vtst*axx[j*READ_STEP+i];
+                v[pos] = v[pos] + vtst*ayy[j*READ_STEP+i];
+                w[pos] = w[pos] + vtst*azz[j*READ_STEP+i];
+                break;
+        }
 
         return;
 }

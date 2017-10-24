@@ -60,6 +60,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 *  INVEL        <STRING>                      mesh input file                                                  *
 *  INSRC_I2     <STRING>                      split source input file prefix for IFAULT=2 option               *
 *  CHKFILE      <STRING>      -c              Checkpoint statistics file to write to                           *
+*  SRCTYPE      <INTEGER>                     The type of source to use                                        *
+*                                             If SRCTYPE = 0, then the source is a moment tensor source        *
+*                                             If SRCTYPE = 1, then the source is a body force                  *
 ****************************************************************************************************************
 */
 
@@ -125,6 +128,8 @@ const char  def_INSRC_I2[50]  = "input_rst/srcpart/split_faults/fault";
 
 const char  def_CHKFILE[50]   = "output_ckp/CHKP";
 
+const int  def_SRCTYPE   = 0;
+
 void command(int argc,    char **argv,
 	     float *TMAX, float *DH,       float *DT,   float *ARBC,    float *PHT,
              int *NPC,    int *ND,         int *NSRC,   int *NST,       int *NVAR,
@@ -135,7 +140,8 @@ void command(int argc,    char **argv,
              int *NBGY,   int *NEDY,       int *NSKPY,
              int *NBGZ,   int *NEDZ,       int *NSKPZ,
              float *FL,   float *FH,       float *FP,   int *IDYNA,     int *SoCalQ,
-             char *INSRC, char *INVEL,     char *OUT,   char *INSRC_I2, char *CHKFILE)
+             char *INSRC, char *INVEL,     char *OUT,   char *INSRC_I2, char *CHKFILE,
+             int *SRCTYPE)
 {
 
    // Fill in default values
@@ -182,6 +188,8 @@ void command(int argc,    char **argv,
    *FH         = def_FH;
    *FP         = def_FP;
 
+   *SRCTYPE    = def_SRCTYPE;
+
     strcpy(INSRC, def_INSRC);
     strcpy(INVEL, def_INVEL);
     strcpy(OUT, def_OUT);
@@ -189,7 +197,7 @@ void command(int argc,    char **argv,
     strcpy(CHKFILE, def_CHKFILE);
 
     extern char *optarg;
-    static const char *optstring = "-T:H:t:A:P:M:D:S:N:V:B:n:I:R:Q:X:Y:Z:x:y:z:i:l:h:p:s:r:W:1:2:3:11:12:13:21:22:23:100:101:102:o:c:";
+    static const char *optstring = "-T:H:t:A:P:M:D:S:N:V:B:n:I:R:Q:X:Y:Z:x:y:z:i:l:h:p:s:r:W:1:2:3:11:12:13:21:22:23:100:101:102:o:c:103";
     static struct option long_options[] = {
         {"TMAX", required_argument, NULL, 'T'},
         {"DH", required_argument, NULL, 'H'},
@@ -232,6 +240,7 @@ void command(int argc,    char **argv,
         {"OUT", required_argument, NULL, 'o'},
         {"INSRC_I2", required_argument, NULL, 102},
         {"CHKFILE", required_argument, NULL, 'c'},
+        {"SRCTYPE", required_argument, NULL, 103},
     };
 
     // If IFAULT=2 and INSRC is not set, then *INSRC = def_INSRC_TPSRC, not def_INSRC
@@ -326,13 +335,16 @@ void command(int argc,    char **argv,
                 strcpy(INSRC_I2, optarg); break;
             case 'c':
                 strcpy(CHKFILE, optarg); break;
+            case 103:
+                *SRCTYPE = atoi(optarg); break;
             default:
                 printf("Usage: %s \nOptions:\n\t[(-T | --TMAX) <TMAX>]\n\t[(-H | --DH) <DH>]\n\t[(-t | --DT) <DT>]\n\t[(-A | --ARBC) <ARBC>]\n\t[(-P | --PHT) <PHT>]\n\t[(-M | --NPC) <NPC>]\n\t[(-D | --ND) <ND>]\n\t[(-S | --NSRC) <NSRC>]\n\t[(-N | --NST) <NST>]\n",argv[0]);
                 printf("\n\t[(-V | --NVE) <NVE>]\n\t[(-B | --MEDIASTART) <MEDIASTART>]\n\t[(-n | --NVAR) <NVAR>]\n\t[(-I | --IFAULT) <IFAULT>]\n\t[(-R | --READ_STEP) <x READ_STEP for CPU>]\n\t[(-Q | --READ_STEP_GPU) <READ_STEP for GPU>]\n");
                 printf("\n\t[(-X | --NX) <x length]\n\t[(-Y | --NY) <y length>]\n\t[(-Z | --NZ) <z length]\n\t[(-x | --NPX) <x processors]\n\t[(-y | --NPY) <y processors>]\n\t[(-z | --NPZ) <z processors>]\n");
                 printf("\n\t[(-1 | --NBGX) <starting point to record in X>]\n\t[(-2 | --NEDX) <ending point to record in X>]\n\t[(-3 | --NSKPX) <skipping points to record in X>]\n\t[(-11 | --NBGY) <starting point to record in Y>]\n\t[(-12 | --NEDY) <ending point to record in Y>]\n\t[(-13 | --NSKPY) <skipping points to record in Y>]\n\t[(-21 | --NBGZ) <starting point to record in Z>]\n\t[(-22 | --NEDZ) <ending point to record in Z>]\n\t[(-23 | --NSKPZ) <skipping points to record in Z>]\n");
                 printf("\n\t[(-i | --IDYNA) <i IDYNA>]\n\t[(-s | --SoCalQ) <s SoCalQ>]\n\t[(-l | --FL) <l FL>]\n\t[(-h | --FH) <i FH>]\n\t[(-p | --FP) <p FP>]\n\t[(-r | --NTISKP) <time skipping in writing>]\n\t[(-W | --WRITE_STEP) <time aggregation in writing>]\n");
-                printf("\n\t[(-100 | --INSRC) <source file>]\n\t[(-101 | --INVEL) <mesh file>]\n\t[(-o | --OUT) <output file>]\n\t[(-102 | --INSRC_I2) <split source file prefix (IFAULT=2)>]\n\t[(-c | --CHKFILE) <checkpoint file to write statistics>]\n\n");
+                printf("\n\t[(-100 | --INSRC) <source file>]\n\t[(-101 | --INVEL) <mesh file>]\n\t[(-o | --OUT) <output file>]\n\t[(-102 | --INSRC_I2) <split source file prefix (IFAULT=2)>]\n\t[(-c | --CHKFILE) <checkpoint file to write statistics>]");
+                printf("\n\t[(-103 | --SRCTYPE) <source type>]\n\n");
                 exit(-1);
         }
     }
@@ -343,5 +355,7 @@ void command(int argc,    char **argv,
     if(!readstepGpuIsSet){
       *READ_STEP_GPU = *READ_STEP;
     }
+
+
     return;
 }
