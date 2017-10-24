@@ -293,8 +293,9 @@ int inisource(int      rank,    int     IFAULT, int     NSRC,   int     READ_STE
    return 0;
 }
 
-void addsrc(int i,      float DH,   float DT,   int NST,    int npsrc,  int READ_STEP, int dim, PosInf psrc,
+void addsrc(int i,      float DH,   float DT,   int NST,    const int srctype, int npsrc,  int READ_STEP, int dim, PosInf psrc,
             Grid1D axx, Grid1D ayy, Grid1D azz, Grid1D axz, Grid1D ayz, Grid1D axy,
+            Grid3D u,   Grid3D v,   Grid3D w, 
             Grid3D xx,  Grid3D yy,  Grid3D zz,  Grid3D xy,  Grid3D yz,  Grid3D xz)
 {
   float vtst;
@@ -307,12 +308,21 @@ void addsrc(int i,      float DH,   float DT,   int NST,    int npsrc,  int READ
      idx = psrc[j*dim]   + 1 + 4*loop;
      idy = psrc[j*dim+1] + 1 + 4*loop;
      idz = psrc[j*dim+2] + align - 1;
-     xx[idx][idy][idz] = xx[idx][idy][idz] - vtst*axx[j*READ_STEP+i];
-     yy[idx][idy][idz] = yy[idx][idy][idz] - vtst*ayy[j*READ_STEP+i];
-     zz[idx][idy][idz] = zz[idx][idy][idz] - vtst*azz[j*READ_STEP+i];
-     xz[idx][idy][idz] = xz[idx][idy][idz] - vtst*axz[j*READ_STEP+i];
-     yz[idx][idy][idz] = yz[idx][idy][idz] - vtst*ayz[j*READ_STEP+i];
-     xy[idx][idy][idz] = xy[idx][idy][idz] - vtst*axy[j*READ_STEP+i];
+     switch (srctype) {
+     case SRC_STRESS:
+        xx[idx][idy][idz] = xx[idx][idy][idz] - vtst*axx[j*READ_STEP+i];
+        yy[idx][idy][idz] = yy[idx][idy][idz] - vtst*ayy[j*READ_STEP+i];
+        zz[idx][idy][idz] = zz[idx][idy][idz] - vtst*azz[j*READ_STEP+i];
+        xz[idx][idy][idz] = xz[idx][idy][idz] - vtst*axz[j*READ_STEP+i];
+        yz[idx][idy][idz] = yz[idx][idy][idz] - vtst*ayz[j*READ_STEP+i];
+        xy[idx][idy][idz] = xy[idx][idy][idz] - vtst*axy[j*READ_STEP+i];
+        break;
+     case SRC_VELOCITY:
+        u[idx][idy][idz] = u[idx][idy][idz] + vtst*axx[j*READ_STEP+i];
+        v[idx][idy][idz] = v[idx][idy][idz] + vtst*ayy[j*READ_STEP+i];
+        w[idx][idy][idz] = w[idx][idy][idz] + vtst*azz[j*READ_STEP+i];
+        break;
+     }
 /*
      printf("xx=%1.6g\n",xx[idx][idy][idz]);
      printf("yy=%1.6g\n",yy[idx][idy][idz]);

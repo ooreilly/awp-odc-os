@@ -523,7 +523,8 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     if(rank==srcproc)
     {
        printf("%d) add initial src\n", rank);
-       addsrc(source_step, DH, DT, NST, npsrc, READ_STEP, maxdim, tpsrc, taxx, tayy, tazz, taxz, tayz, taxy, xx, yy, zz, xy, yz, xz);
+       addsrc(source_step, DH, DT, NST, SRCTYPE, npsrc, READ_STEP, maxdim, tpsrc, taxx, tayy, tazz, taxz, tayz, taxy, 
+              u1, v1, w1, xx, yy, zz, xy, yz, xz);
     }
 
     if(rank==0) printf("Allocate device velocity and stress pointers and copy.\n");

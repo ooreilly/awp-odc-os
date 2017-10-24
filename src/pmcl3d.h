@@ -68,8 +68,10 @@ int inisource(int      rank,    int     IFAULT, int     NSRC,   int     READ_STE
               PosInf   *ptpsrc, Grid1D  *ptaxx, Grid1D  *ptayy, Grid1D  *ptazz,
               Grid1D  *ptaxz,  Grid1D  *ptayz,   Grid1D *ptaxy, char *INSRC, char *INSRC_I2);
 
-void addsrc(int i,      float DH,   float DT,   int NST,    int npsrc,  int READ_STEP, int dim, PosInf psrc,
+void addsrc(int i,      float DH,   float DT,   int NST,    
+            const int    srctype,   int npsrc,  int READ_STEP, int dim, PosInf psrc,
             Grid1D axx, Grid1D ayy, Grid1D azz, Grid1D axz, Grid1D ayz, Grid1D axy,
+            Grid3D u,   Grid3D v,   Grid3D w, 
             Grid3D xx,  Grid3D yy,  Grid3D zz,  Grid3D xy,  Grid3D yz,  Grid3D xz);
 
 void inimesh(int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D qp, Grid3D qs, float *taumax, float *taumin,
