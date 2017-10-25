@@ -36,7 +36,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 typedef float *RESTRICT *RESTRICT *RESTRICT Grid3D;
 typedef float *RESTRICT Grid1D;
 typedef int   *RESTRICT PosInf;
-enum SRCTYPE {SRC_VELOCITY, SRC_STRESS};
+enum SRCTYPE {SRC_VELOCITY=0, SRC_STRESS=1};
 
 void command(int argc, char **argv,
              float *TMAX, float *DH, float *DT, float *ARBC, float *PHT,
@@ -71,6 +71,7 @@ int inisource(int      rank,    int     IFAULT, int     NSRC,   int     READ_STE
 void addsrc(int i,      float DH,   float DT,   int NST,    
             const int    srctype,   int npsrc,  int READ_STEP, int dim, PosInf psrc,
             Grid1D axx, Grid1D ayy, Grid1D azz, Grid1D axz, Grid1D ayz, Grid1D axy,
+            Grid3D d1,
             Grid3D u,   Grid3D v,   Grid3D w, 
             Grid3D xx,  Grid3D yy,  Grid3D zz,  Grid3D xy,  Grid3D yz,  Grid3D xz);
 

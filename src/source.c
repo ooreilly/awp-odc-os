@@ -25,7 +25,7 @@ int read_src_ifault_2(int rank, int READ_STEP,
     int idx){
 
   FILE *f;
-  char fname[150];
+  char fname[500];
   int dummy[2], i, j;
   int nbx, nby;
   PosInf tpsrc = NULL;
@@ -295,6 +295,7 @@ int inisource(int      rank,    int     IFAULT, int     NSRC,   int     READ_STE
 
 void addsrc(int i,      float DH,   float DT,   int NST,    const int srctype, int npsrc,  int READ_STEP, int dim, PosInf psrc,
             Grid1D axx, Grid1D ayy, Grid1D azz, Grid1D axz, Grid1D ayz, Grid1D axy,
+            Grid3D d1,
             Grid3D u,   Grid3D v,   Grid3D w, 
             Grid3D xx,  Grid3D yy,  Grid3D zz,  Grid3D xy,  Grid3D yz,  Grid3D xz)
 {
@@ -318,9 +319,9 @@ void addsrc(int i,      float DH,   float DT,   int NST,    const int srctype, i
         xy[idx][idy][idz] = xy[idx][idy][idz] - vtst*axy[j*READ_STEP+i];
         break;
      case SRC_VELOCITY:
-        u[idx][idy][idz] = u[idx][idy][idz] + vtst*axx[j*READ_STEP+i];
-        v[idx][idy][idz] = v[idx][idy][idz] + vtst*ayy[j*READ_STEP+i];
-        w[idx][idy][idz] = w[idx][idy][idz] + vtst*azz[j*READ_STEP+i];
+        u[idx][idy][idz] = u[idx][idy][idz] + vtst*axx[j*READ_STEP+i]/d1[idx][idy][idz];
+        v[idx][idy][idz] = v[idx][idy][idz] + vtst*ayy[j*READ_STEP+i]/d1[idx][idy][idz];
+        w[idx][idy][idz] = w[idx][idy][idz] + vtst*azz[j*READ_STEP+i]/d1[idx][idy][idz];
         break;
      }
 /*

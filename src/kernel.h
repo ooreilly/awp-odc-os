@@ -35,6 +35,7 @@ __global__ void dstrqc(float* xx, float* yy,    float* zz,    float* xy,    floa
 __global__ void addsrc_cu(int i,      int READ_STEP, int dim,    const enum SRCTYPE srctype, 
                           int* psrc, int npsrc,
                           float* axx, float* ayy,    float* azz, float* axz, float* ayz, float* axy,
+                          float* d_1,
                           float* u, float* v, float* w, 
                           float* xx,  float* yy,     float* zz,  float* xy,  float* yz,  float* xz);
 #endif

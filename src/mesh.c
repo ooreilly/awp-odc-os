@@ -103,7 +103,7 @@ void inimesh(int MEDIASTART, Grid3D d1, Grid3D mu, Grid3D lam, Grid3D qp, Grid3D
 
       if(MEDIASTART>=1 && MEDIASTART<=3)
       {
-          char filename[40];
+          char filename[500];
           if(MEDIASTART<3) sprintf(filename,INVEL);
           else if(MEDIASTART==3){
             MPI_Comm_rank(MCW,&rank);

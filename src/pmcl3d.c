@@ -39,6 +39,7 @@ void dstrqc_H(float* xx,       float* yy,     float* zz,    float* xy,    float*
               int e_i,         int s_j,       int e_j);
 void addsrc_H(int i,      int READ_STEP, int dim,    int    mode, int* psrc,  int npsrc,  cudaStream_t St,
               float* axx, float* ayy,    float* azz, float* axz, float* ayz, float* axy,
+              float* d_d1,
               float* u,   float *v,      float* w,
               float* xx,  float* yy,     float* zz,  float* xy,  float* yz,  float* xz);
 
@@ -75,7 +76,7 @@ int main(int argc,char **argv)
     int   WRITE_STRESS;
     MPI_Offset displacement;
     float FL, FH, FP;
-    char  INSRC[50], INVEL[50], OUT[50], INSRC_I2[50], CHKFILE[50];
+    char  INSRC[500], INVEL[500], OUT[500], INSRC_I2[500], CHKFILE[500];
     double GFLOPS = 1.0;
     double GFLOPS_SUM = 0.0;
     Grid3D u1=NULL, v1=NULL, w1=NULL;
@@ -541,7 +542,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     {
        printf("%d) add initial src\n", rank);
        addsrc(source_step, DH, DT, NST, SRCTYPE, npsrc, READ_STEP, maxdim, tpsrc, taxx, tayy, tazz, taxz, tayz, taxy, 
-              u1, v1, w1, xx, yy, zz, xy, yz, xz);
+              d1, u1, v1, w1, xx, yy, zz, xy, yz, xz);
     }
 
     if(rank==0) printf("Allocate device velocity and stress pointers and copy.\n");
@@ -670,7 +671,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
             ++source_step;
             addsrc_H(source_step, READ_STEP_GPU, maxdim, 0, 
                      d_tpsrc, npsrc, stream_i, d_taxx, d_tayy, d_tazz, d_taxz, d_tayz, d_taxy,
-                     d_u1, d_v1, d_w1, d_xx,       d_yy,      d_zz,   d_xy,    d_yz,  d_xz);
+                     d_d1, d_u1, d_v1, d_w1, d_xx,       d_yy,      d_zz,   d_xy,    d_yz,  d_xz);
          }
          cudaThreadSynchronize();
 
@@ -696,8 +697,42 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                 Bufx[tmpInd] = u1[i][j][k];
                 Bufy[tmpInd] = v1[i][j][k];
                 Bufz[tmpInd] = w1[i][j][k];
+
                 tmpInd++;
               }
+
+          if (WRITE_STRESS) {
+                cudaMemcpy(&xx[0][0][0],d_xx,num_bytes,cudaMemcpyDeviceToHost);
+                cudaMemcpy(&yy[0][0][0],d_yy,num_bytes,cudaMemcpyDeviceToHost);
+                cudaMemcpy(&zz[0][0][0],d_zz,num_bytes,cudaMemcpyDeviceToHost);
+                cudaMemcpy(&xy[0][0][0],d_xy,num_bytes,cudaMemcpyDeviceToHost);
+                cudaMemcpy(&xz[0][0][0],d_xz,num_bytes,cudaMemcpyDeviceToHost);
+                cudaMemcpy(&yz[0][0][0],d_yz,num_bytes,cudaMemcpyDeviceToHost);
+
+                tmpInd = idtmp;
+
+                for(k=nzt+align-1 - rec_nbgz; k>=nzt+align-1 - rec_nedz; k=k-NSKPZ)
+                  for(j=2+4*loop + rec_nbgy; j<=2+4*loop + rec_nedy; j=j+NSKPY)
+                    for(i=2+4*loop + rec_nbgx; i<=2+4*loop + rec_nedx; i=i+NSKPX)
+                    {
+                      //idx = (i-2-4*loop)/NSKPX;
+                      //idy = (j-2-4*loop)/NSKPY;
+                      //idz = ((nzt+align-1) - k)/NSKPZ;
+                      //tmpInd = idtmp + idz*rec_nxt*rec_nyt + idy*rec_nxt + idx;
+                      //if(rank==0) printf("%ld:%d,%d,%d\t",tmpInd,i,j,k);
+                      Bufxx[tmpInd] = xx[i][j][k];
+                      Bufyy[tmpInd] = yy[i][j][k];
+                      Bufzz[tmpInd] = zz[i][j][k];
+
+                      Bufxy[tmpInd] = xy[i][j][k];
+                      Bufxz[tmpInd] = xz[i][j][k];
+                      Bufyz[tmpInd] = yz[i][j][k];
+
+                      tmpInd++;
+                    }
+
+          }
+
           if((cur_step/NTISKP)%WRITE_STEP == 0){
             cudaThreadSynchronize();
             sprintf(filename, "%s%07ld", filenamebasex, cur_step);
@@ -722,7 +757,7 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
                 err = MPI_File_set_view(fh, displacement, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
                 err = MPI_File_write_all(fh, Bufxx, rec_nxt*rec_nyt*rec_nzt*WRITE_STEP, MPI_FLOAT, &filestatus);
                 err = MPI_File_close(&fh);
-                sprintf(filename, "%s%07ld", filenamebasexx, cur_step);
+                sprintf(filename, "%s%07ld", filenamebaseyy, cur_step);
                 err = MPI_File_open(MCW,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&fh);
                 err = MPI_File_set_view(fh, displacement, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
                 err = MPI_File_write_all(fh, Bufyy, rec_nxt*rec_nyt*rec_nzt*WRITE_STEP, MPI_FLOAT, &filestatus);

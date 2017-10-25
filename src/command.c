@@ -119,15 +119,15 @@ const float def_FL         = 0.01;
 const float def_FH         = 25.0;
 const float def_FP         = 0.5;
 
-const char  def_INSRC[50]  = "input/FAULTPOW";
-const char  def_INVEL[50]  = "input/media";
+const char  def_INSRC[500]  = "input/FAULTPOW";
+const char  def_INVEL[500]  = "input/media";
 
-const char  def_OUT[50] = "output_sfc";
+const char  def_OUT[500] = "output_sfc";
 
-const char  def_INSRC_TPSRC[50] = "input_rst/srcpart/tpsrc/tpsrc";
-const char  def_INSRC_I2[50]  = "input_rst/srcpart/split_faults/fault";
+const char  def_INSRC_TPSRC[500] = "input_rst/srcpart/tpsrc/tpsrc";
+const char  def_INSRC_I2[500]  = "input_rst/srcpart/split_faults/fault";
 
-const char  def_CHKFILE[50]   = "output_ckp/CHKP";
+const char  def_CHKFILE[500]   = "output_ckp/CHKP";
 
 const int  def_SRCTYPE   = 0;
 const int  def_WRITE_STRESS   = 0;

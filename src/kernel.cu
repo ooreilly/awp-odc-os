@@ -144,6 +144,7 @@ void addsrc_H(int i,      int READ_STEP, int dim,         const enum SRCTYPE src
               int* psrc,  int npsrc,     cudaStream_t St,
               float* axx, float* ayy,    float* azz,      
               float* axz, float* ayz,    float* axy,
+              float* d_1,
               float* u,   float* v,      float* w, 
               float* xx,  float* yy,     float* zz,  
               float* xy,  float* yz,     float* xz)
@@ -163,7 +164,7 @@ void addsrc_H(int i,      int READ_STEP, int dim,         const enum SRCTYPE src
     cerr=cudaGetLastError();
     if(cerr!=cudaSuccess) printf("CUDA ERROR: addsrc before kernel: %s\n",cudaGetErrorString(cerr));
     addsrc_cu<<<grid, block, 0, St>>>(i,  READ_STEP, dim, srctype, psrc, npsrc, axx, ayy, azz, axz, ayz, axy,
-                                      u, v, w, xx, yy,        zz,  xy,   yz,  xz);
+                                      d_1, u, v, w, xx, yy,        zz,  xy,   yz,  xz);
     cerr=cudaGetLastError();
     if(cerr!=cudaSuccess) printf("CUDA ERROR: addsrc after kernel: %s\n",cudaGetErrorString(cerr));
     return;
@@ -576,6 +577,7 @@ __global__ void dstrqc(float* xx, float* yy,    float* zz,    float* xy,    floa
 __global__ void addsrc_cu(int i,      int READ_STEP, int dim,    const enum SRCTYPE mode, 
                           int* psrc,  int npsrc,
                           float* axx, float* ayy,    float* azz, float* axz, float* ayz, float* axy,
+                          float* d_1,
                           float* u, float* v, float* w, 
                           float* xx,  float* yy,     float* zz,  float* xy,  float* yz,  float* xz)
 {
@@ -601,9 +603,9 @@ __global__ void addsrc_cu(int i,      int READ_STEP, int dim,    const enum SRCT
                 xy[pos] = xy[pos] - vtst*axy[j*READ_STEP+i];
                 break;
         case SRC_VELOCITY:
-                u[pos] = u[pos] + vtst*axx[j*READ_STEP+i];
-                v[pos] = v[pos] + vtst*ayy[j*READ_STEP+i];
-                w[pos] = w[pos] + vtst*azz[j*READ_STEP+i];
+                u[pos] = u[pos] + vtst*axx[j*READ_STEP+i]/d_1[pos];
+                v[pos] = v[pos] + vtst*ayy[j*READ_STEP+i]/d_1[pos];
+                w[pos] = w[pos] + vtst*azz[j*READ_STEP+i]/d_1[pos];
                 break;
         }
 
