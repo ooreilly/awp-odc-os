@@ -87,6 +87,8 @@ int main(int argc,char **argv)
     Grid1D taxx=NULL, tayy=NULL, tazz=NULL, taxz=NULL, tayz=NULL, taxy=NULL;
     Grid1D Bufx=NULL;
     Grid1D Bufy=NULL, Bufz=NULL;
+    Grid1D Bufxx=NULL, Bufyy=NULL, Bufzz=NULL;
+    Grid1D Bufxy=NULL, Bufxz=NULL, Bufyz=NULL;
     Grid3D vx1=NULL,   vx2=NULL,   lam_mu=NULL;
     Grid1D dcrjx=NULL, dcrjy=NULL, dcrjz=NULL;
     float vse[2], vpe[2], dde[2];
@@ -182,10 +184,17 @@ int main(int argc,char **argv)
     int rec_nedy;   // 0-based indexing
     int rec_nbgz;   // 0-based indexing
     int rec_nedz;   // 0-based indexing
-    char filename[50];
-    char filenamebasex[50];
-    char filenamebasey[50];
-    char filenamebasez[50];
+    char filename[500];
+    char filenamebasex[500];
+    char filenamebasey[500];
+    char filenamebasez[500];
+
+    char filenamebasexx[500];
+    char filenamebaseyy[500];
+    char filenamebasezz[500];
+    char filenamebasexy[500];
+    char filenamebasexz[500];
+    char filenamebaseyz[500];
 
 //  variable initialization begins
     command(argc,argv,&TMAX,&DH,&DT,&ARBC,&PHT,&NPC,&ND,&NSRC,&NST,
@@ -197,6 +206,13 @@ int main(int argc,char **argv)
     sprintf(filenamebasex,"%s/SX",OUT);
     sprintf(filenamebasey,"%s/SY",OUT);
     sprintf(filenamebasez,"%s/SZ",OUT);
+    
+    sprintf(filenamebasexx,"%s/SXX",OUT);
+    sprintf(filenamebaseyy,"%s/SYY",OUT);
+    sprintf(filenamebasezz,"%s/SZZ",OUT);
+    sprintf(filenamebasexy,"%s/SXY",OUT);
+    sprintf(filenamebasexz,"%s/SXZ",OUT);
+    sprintf(filenamebaseyz,"%s/SYZ",OUT);
 
     //printf("After command.\n");
     // Below 12 lines are NOT for HPGPU4 machine!
@@ -569,6 +585,15 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
     Bufx  = Alloc1D(rec_nxt*rec_nyt*rec_nzt*WRITE_STEP);
     Bufy  = Alloc1D(rec_nxt*rec_nyt*rec_nzt*WRITE_STEP);
     Bufz  = Alloc1D(rec_nxt*rec_nyt*rec_nzt*WRITE_STEP);
+    
+    if (WRITE_STRESS) {
+        Bufxx  = Alloc1D(rec_nxt*rec_nyt*rec_nzt*WRITE_STEP);
+        Bufyy  = Alloc1D(rec_nxt*rec_nyt*rec_nzt*WRITE_STEP);
+        Bufzz  = Alloc1D(rec_nxt*rec_nyt*rec_nzt*WRITE_STEP);
+        Bufxy  = Alloc1D(rec_nxt*rec_nyt*rec_nzt*WRITE_STEP);
+        Bufxz  = Alloc1D(rec_nxt*rec_nyt*rec_nzt*WRITE_STEP);
+        Bufyz  = Alloc1D(rec_nxt*rec_nyt*rec_nzt*WRITE_STEP);
+    }
     num_bytes = sizeof(float)*3*(4*loop)*(nyt+4+8*loop)*(nzt+2*align);
     cudaMallocHost((void**)&SL_vel, num_bytes);
     cudaMallocHost((void**)&SR_vel, num_bytes);
@@ -690,6 +715,39 @@ rank, READ_STEP, READ_STEP_GPU, NST, IFAULT);
             err = MPI_File_set_view(fh, displacement, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
             err = MPI_File_write_all(fh, Bufz, rec_nxt*rec_nyt*rec_nzt*WRITE_STEP, MPI_FLOAT, &filestatus);
             err = MPI_File_close(&fh);
+
+            if (WRITE_STRESS) {
+                sprintf(filename, "%s%07ld", filenamebasexx, cur_step);
+                err = MPI_File_open(MCW,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&fh);
+                err = MPI_File_set_view(fh, displacement, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
+                err = MPI_File_write_all(fh, Bufxx, rec_nxt*rec_nyt*rec_nzt*WRITE_STEP, MPI_FLOAT, &filestatus);
+                err = MPI_File_close(&fh);
+                sprintf(filename, "%s%07ld", filenamebasexx, cur_step);
+                err = MPI_File_open(MCW,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&fh);
+                err = MPI_File_set_view(fh, displacement, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
+                err = MPI_File_write_all(fh, Bufyy, rec_nxt*rec_nyt*rec_nzt*WRITE_STEP, MPI_FLOAT, &filestatus);
+                err = MPI_File_close(&fh);
+                sprintf(filename, "%s%07ld", filenamebasezz, cur_step);
+                err = MPI_File_open(MCW,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&fh);
+                err = MPI_File_set_view(fh, displacement, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
+                err = MPI_File_write_all(fh, Bufzz, rec_nxt*rec_nyt*rec_nzt*WRITE_STEP, MPI_FLOAT, &filestatus);
+                err = MPI_File_close(&fh);
+                sprintf(filename, "%s%07ld", filenamebasexy, cur_step);
+                err = MPI_File_open(MCW,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&fh);
+                err = MPI_File_set_view(fh, displacement, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
+                err = MPI_File_write_all(fh, Bufxy, rec_nxt*rec_nyt*rec_nzt*WRITE_STEP, MPI_FLOAT, &filestatus);
+                err = MPI_File_close(&fh);
+                sprintf(filename, "%s%07ld", filenamebasexz, cur_step);
+                err = MPI_File_open(MCW,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&fh);
+                err = MPI_File_set_view(fh, displacement, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
+                err = MPI_File_write_all(fh, Bufxz, rec_nxt*rec_nyt*rec_nzt*WRITE_STEP, MPI_FLOAT, &filestatus);
+                err = MPI_File_close(&fh);
+                sprintf(filename, "%s%07ld", filenamebaseyz, cur_step);
+                err = MPI_File_open(MCW,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&fh);
+                err = MPI_File_set_view(fh, displacement, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
+                err = MPI_File_write_all(fh, Bufyz, rec_nxt*rec_nyt*rec_nzt*WRITE_STEP, MPI_FLOAT, &filestatus);
+                err = MPI_File_close(&fh);
+            }
           }
           //else
             //cudaThreadSynchronize();
