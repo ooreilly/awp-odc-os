@@ -1088,14 +1088,14 @@ void calcRecordingPoints(int *rec_nbgx, int *rec_nedx,
 
 int check_sourcetype(const enum SRCTYPE srctype)
 {
-        int pass = 0;
+        int err = 1;
         switch (srctype) {
         case SRC_STRESS:
-                pass = 1;
+                err = 0;
                 break;
         case SRC_VELOCITY:
-                pass = 1;
+                err = 0;
                 break;
         }
-        return pass;        
+        return err;        
 }
