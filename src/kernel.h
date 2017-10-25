@@ -14,6 +14,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 #ifndef _KERNEL_H
 #define _KERNEL_H
+#include "pmcl3d.h"
 
 __global__ void dvelcx(float* u1,    float* v1,    float* w1,    float* xx,  float* yy, float* zz, float* xy, float* xz, float* yz,
                        float* dcrjx, float* dcrjy, float* dcrjz, float* d_1, int s_i,   int e_i);

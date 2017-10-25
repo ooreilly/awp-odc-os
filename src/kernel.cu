@@ -16,6 +16,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <stdio.h>
 #include "kernel.h"
 #include "pmcl3d_cons.h"
+#include "pmcl3d.h"
 
 __constant__ float d_c1;
 __constant__ float d_c2;
@@ -599,7 +600,7 @@ __global__ void addsrc_cu(int i,      int READ_STEP, int dim,    const enum SRCT
                 yz[pos] = yz[pos] - vtst*ayz[j*READ_STEP+i];
                 xy[pos] = xy[pos] - vtst*axy[j*READ_STEP+i];
                 break;
-        case SRC_VEL:
+        case SRC_VELOCITY:
                 u[pos] = u[pos] + vtst*axx[j*READ_STEP+i];
                 v[pos] = v[pos] + vtst*ayy[j*READ_STEP+i];
                 w[pos] = w[pos] + vtst*azz[j*READ_STEP+i];
