@@ -72,6 +72,7 @@ int main(int argc,char **argv)
     int   NBGX, NEDX, NSKPX, NBGY, NEDY, NSKPY, NBGZ, NEDZ, NSKPZ;
     int   nxt, nyt, nzt;
     int   SRCTYPE;
+    int   WRITE_STRESS;
     MPI_Offset displacement;
     float FL, FH, FP;
     char  INSRC[50], INVEL[50], OUT[50], INSRC_I2[50], CHKFILE[50];
@@ -189,7 +190,7 @@ int main(int argc,char **argv)
 //  variable initialization begins
     command(argc,argv,&TMAX,&DH,&DT,&ARBC,&PHT,&NPC,&ND,&NSRC,&NST,
       &NVAR,&NVE,&MEDIASTART,&IFAULT,&READ_STEP,&READ_STEP_GPU,
-      &NTISKP,&WRITE_STEP,&NX,&NY,&NZ,&PX,&PY,
+      &NTISKP,&WRITE_STEP,&WRITE_STRESS,&NX,&NY,&NZ,&PX,&PY,
       &NBGX,&NEDX,&NSKPX,&NBGY,&NEDY,&NSKPY,&NBGZ,&NEDZ,&NSKPZ,
       &FL,&FH,&FP,&IDYNA,&SoCalQ,INSRC,INVEL,OUT,INSRC_I2,CHKFILE,&SRCTYPE);
 

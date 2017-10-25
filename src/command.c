@@ -63,6 +63,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 *  SRCTYPE      <INTEGER>                     The type of source to use                                        *
 *                                             If SRCTYPE = 0, then the source is a moment tensor source        *
 *                                             If SRCTYPE = 1, then the source is a body force                  *
+*  WRITE_STRESS <INTEGER>                     If `WRITE_STRESS = 1` write stresses in addition to velocities   *
 ****************************************************************************************************************
 */
 
@@ -129,12 +130,13 @@ const char  def_INSRC_I2[50]  = "input_rst/srcpart/split_faults/fault";
 const char  def_CHKFILE[50]   = "output_ckp/CHKP";
 
 const int  def_SRCTYPE   = 0;
+const int  def_WRITE_STRESS   = 0;
 
 void command(int argc,    char **argv,
 	     float *TMAX, float *DH,       float *DT,   float *ARBC,    float *PHT,
              int *NPC,    int *ND,         int *NSRC,   int *NST,       int *NVAR,
              int *NVE,    int *MEDIASTART, int *IFAULT, int *READ_STEP, int *READ_STEP_GPU,
-             int *NTISKP, int *WRITE_STEP,
+             int *NTISKP, int *WRITE_STEP, int *WRITE_STRESS, 
     	       int *NX,     int *NY,         int *NZ,     int *PX,        int *PY,
              int *NBGX,   int *NEDX,       int *NSKPX,
              int *NBGY,   int *NEDY,       int *NSKPY,
@@ -165,6 +167,7 @@ void command(int argc,    char **argv,
 
    *NTISKP     = def_NTISKP;
    *WRITE_STEP = def_WRITE_STEP;
+   *WRITE_STRESS = def_WRITE_STRESS;
 
    *NX         = def_NX;
    *NY         = def_NY;
@@ -189,6 +192,7 @@ void command(int argc,    char **argv,
    *FP         = def_FP;
 
    *SRCTYPE    = def_SRCTYPE;
+   
 
     strcpy(INSRC, def_INSRC);
     strcpy(INVEL, def_INVEL);
@@ -197,7 +201,7 @@ void command(int argc,    char **argv,
     strcpy(CHKFILE, def_CHKFILE);
 
     extern char *optarg;
-    static const char *optstring = "-T:H:t:A:P:M:D:S:N:V:B:n:I:R:Q:X:Y:Z:x:y:z:i:l:h:p:s:r:W:1:2:3:11:12:13:21:22:23:100:101:102:o:c:103";
+    static const char *optstring = "-T:H:t:A:P:M:D:S:N:V:B:n:I:R:Q:X:Y:Z:x:y:z:i:l:h:p:s:r:W:4:1:2:3:11:12:13:21:22:23:100:101:102:o:c:103";
     static struct option long_options[] = {
         {"TMAX", required_argument, NULL, 'T'},
         {"DH", required_argument, NULL, 'H'},
@@ -235,6 +239,7 @@ void command(int argc,    char **argv,
         {"FP", required_argument, NULL, 'p'},
         {"NTISKP", required_argument, NULL, 'r'},
         {"WRITE_STEP", required_argument, NULL, 'W'},
+        {"WRITE_STRESS", required_argument, NULL, 4},
         {"INSRC", required_argument, NULL, 100},
         {"INVEL", required_argument, NULL, 101},
         {"OUT", required_argument, NULL, 'o'},
@@ -324,6 +329,8 @@ void command(int argc,    char **argv,
                 *NTISKP     = atoi(optarg); break;
             case 'W':
                 *WRITE_STEP = atoi(optarg); break;
+            case 4:
+                *WRITE_STRESS = atoi(optarg); break;
             case 100:
                 insrcIsSet = 1;
                 strcpy(INSRC, optarg); break;
@@ -343,6 +350,7 @@ void command(int argc,    char **argv,
                 printf("\n\t[(-X | --NX) <x length]\n\t[(-Y | --NY) <y length>]\n\t[(-Z | --NZ) <z length]\n\t[(-x | --NPX) <x processors]\n\t[(-y | --NPY) <y processors>]\n\t[(-z | --NPZ) <z processors>]\n");
                 printf("\n\t[(-1 | --NBGX) <starting point to record in X>]\n\t[(-2 | --NEDX) <ending point to record in X>]\n\t[(-3 | --NSKPX) <skipping points to record in X>]\n\t[(-11 | --NBGY) <starting point to record in Y>]\n\t[(-12 | --NEDY) <ending point to record in Y>]\n\t[(-13 | --NSKPY) <skipping points to record in Y>]\n\t[(-21 | --NBGZ) <starting point to record in Z>]\n\t[(-22 | --NEDZ) <ending point to record in Z>]\n\t[(-23 | --NSKPZ) <skipping points to record in Z>]\n");
                 printf("\n\t[(-i | --IDYNA) <i IDYNA>]\n\t[(-s | --SoCalQ) <s SoCalQ>]\n\t[(-l | --FL) <l FL>]\n\t[(-h | --FH) <i FH>]\n\t[(-p | --FP) <p FP>]\n\t[(-r | --NTISKP) <time skipping in writing>]\n\t[(-W | --WRITE_STEP) <time aggregation in writing>]\n");
+                printf("[(-W | --WRITE_STRESS) <output stresses yes/no>]\n");    
                 printf("\n\t[(-100 | --INSRC) <source file>]\n\t[(-101 | --INVEL) <mesh file>]\n\t[(-o | --OUT) <output file>]\n\t[(-102 | --INSRC_I2) <split source file prefix (IFAULT=2)>]\n\t[(-c | --CHKFILE) <checkpoint file to write statistics>]");
                 printf("\n\t[(-103 | --SRCTYPE) <source type>]\n\n");
                 exit(-1);
